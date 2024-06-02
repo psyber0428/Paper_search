@@ -1,0 +1,27 @@
+services:                                     # サービスを定義するための決まり文句
+  db:                                         # DB用のコンテナ（名前は自由に定義できる）
+    image: mysql:paper                        # イメージのREPOSITORY名:TAG名
+    build: ./db                               # Dockerfileの相対パス  
+    container_name: mysql-paper2               # コンテナ名
+    expose:                                   # webサーバー側のコンテナからアクセスするために必要
+      - "3306"                                # webサーバー側のコンテナに公開するポート番号
+    ports:                                    # ローカルPCからもアクセスするために必要
+      - "3307:3306"                           # ローカルPCのポート番号:コンテナのポート番号
+    environment:
+      - MYSQL_ROOT_PASSWORD=root              # rootユーザのパスワード
+      - MYSQL_DATABASE=paper                  # データベース名
+      - MYSQL_USER=paper                      # ユーザー名
+      - MYSQL_PASSWORD=paper                  # ユーザーのパスワード
+    volumes:
+    - ../db/database:/var/lib/mysql           # データベースの情報を保持するために定義
+    - ../db/init:/docker-entrypoint-initdb.d  # コンテナ初回作成時に実行するsqlファイルをマウントする
+  web:                                        # webサーバー用のコンテナを定義
+    image: python:paper                       # イメージのREPOSITORY名:TAG名を指定
+    build: ./web                              # Dockerfileの相対パス
+    container_name: python-paper2              # コンテナ名
+    depends_on:                               # サービスの依存関係を指定する
+      - db                                    # webがdbに依存するよう指定
+    working_dir: /workspace/web/              # 作業ディレクトリを指定
+    volumes:                                  # マウントするファイルを指定する
+      - ../web:/workspace/web                 # ローカルPCのwebをコンテナのworkspace/webにマウント
+    tty: true                                 # コンテナを起動し続けるための定義
